@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<!--  -->
+
+
+<head>
+    <title>COVID-19 Vaccine Tracker</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/buefy/dist/buefy.min.css">
+
+    <script src="https://unpkg.com/vue"></script>
+    <!-- Full bundle -->
+    <script src="https://unpkg.com/buefy/dist/buefy.min.js"></script>
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css">
+
+</head>
+
+<body>
+    <div id="app">
+        <b-navbar type="is-primary">
+            <template slot="brand">
+                <b-navbar-item>
+                    <i class="fas fa-syringe"></i>&nbsp; COVID-19 Vaccine Tracker
+                </b-navbar-item>
+            </template>
+            <template slot="end">
+                <b-navbar-item href="https://docs.google.com/spreadsheets/d/1qRN1CTiEBqQkxfOUI8_wYfXiWxoVjHKiwruslmfOqSs/edit#gid=0" target="_blank">
+                    
+                    Spreadsheet
+                </b-navbar-item>
+            </template>
+        </b-navbar>
+
+        <div class="columns">
+
+        <aside class="column is-2 menu section" style="overflow-y: scroll; height: 95vh">
+            <p class="menu-label">
+                Vaccinations
+            </p>
+            <ul class="menu-list">
+                <li><a :class="{'is-active': selected == null}" @click="selected = null">All Vaccinations</a></li>
+                <li v-for="vaccine in statusData"><a :class="{'is-active': selected == vaccine.vaccinename}" @click="selected = vaccine.vaccinename">{{ vaccine.vaccinename }}</a></li>
+            </ul>
+        </aside>
+
+
+        <div class="column section">
+            <div v-if="selected == null">
+                <div class="columns is-multiline">
+                    <div class="column" v-for="vaccine in statusData">
+                        <div class="card" style="width: 350px;">
+                            <div class="card-content">
+                                <div v-if="company in companies" class="is-size-6" v-for="company in vaccine.companyname.split(',')" style="float: right">
+                                    <img style="margin-left: 10px" :src="'https://www.countryflags.io/' + companies[company].companycountrycode + '/flat/32.png'" style="vertical-align: middle">                                        
+                                </div>
+            
+                                <h3 class="is-size-4" style="margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ vaccine.vaccinename }}</h3>
+                                <p class="is-size-7" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ vaccine.companyname }}</p>
+                                <div class="menu-label">Progress</div>
+                                <progress class="progress is-success" :value="vaccine.phase" max="7">15%</progress>
+                                <div class="menu-label">Phase</div>
+                                <p class="is-size-5">{{ phases[vaccine.phase] }}</p>
+
+                            </div>
+                            <div class="card-footer">
+                                <a class="card-footer-item" @click="selected = vaccine.vaccinename">More Information</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-for="vaccine in statusData" class="card" v-if="selected == vaccine.vaccinename">
+                <div class="card-content">
+
+                    <h1 class="is-size-4">{{ vaccine.vaccinename }}</h1>
+                    <div v-if="company in companies" class="is-size-6" v-for="company in vaccine.companyname.split(',')">
+                        <p>
+                            <img :src="'https://www.countryflags.io/' + companies[company].companycountrycode + '/flat/32.png'" style="vertical-align: middle">
+                            <a target="_blank" :href="companies[company].companylink">{{ company }} ({{ companies[company].companycountry }})</a>
+                        </p>
+                    </div>
+
+                    <h3 class="menu-label">Progress</h3>
+                    <progress class="progress is-success" :value="vaccine.phase" max="7">15%</progress>
+
+                    <div class="columns">
+                        <div class="column">
+                            <p>Pre-clinical research</p>
+                        </div>
+                        <div class="column">
+                            <p>Pre-clinical Trials</p>
+                        </div>
+                        <div class="column">
+                            <p><a :href="vaccine.phase1link" target="_blank">Phase 1 trial</a></p>
+                            <p>Start: {{ vaccine.p1start }}</p>
+                            <p>End: {{ vaccine.p1end }}</p>
+                        </div>
+                        <div class="column">
+                            <p><a :href="vaccine.phase2link" target="_blank">Phase 2 trial</a></p>
+                            <p>Start: {{ vaccine.p2start }}</p>
+                            <p>End: {{ vaccine.p2end }}</p>
+                        </div>
+                        <div class="column">
+                            <p><a :href="vaccine.phase3link" target="_blank">Phase 3 trial</a></p>
+                            <p>Start: {{ vaccine.p2start }}</p>
+                            <p>End: {{ vaccine.p2end }}</p>
+                        </div>
+                        <div class="column">
+                            <p>FDA Approved</p>
+                        </div>
+                        <div class="column">
+                            <p>Generally Available</p>
+                        </div>
+                    </div>
+
+                    <div class="columns">
+                        <div class="column">
+                            <h3 class="menu-label">Phase</h3>
+                            <p class="is-size-3">{{ phases[vaccine.phase] }}</p>
+                        </div>
+                        <div class="column">
+                            <h3 class="menu-label">Type</h3>
+                            <p class="is-size-3">{{ vaccine.vaccinetype }}</p>
+                        </div>
+                        <div class="column">
+                            <h3 class="menu-label">Candidates Enrolled</h3>
+                            <p class="is-size-3">{{ vaccine.currentlyenrolled }}</p>
+                        </div>                        
+                    </div>
+
+                    <h3 class="menu-label">Description</h3>
+                    <p>{{ vaccine.details }}</p>
+                    <h3 class="menu-label">Status</h3>
+                    <p>{{ vaccine.status }}</p>
+                    <div v-if="vaccine.articles">
+                        <h3 class="menu-label">More Information</h3>
+                        <a v-for="article in vaccine.articles.split('\n')" :href="article">{{ article }}</a>
+    
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>  
+
+    </div>
+    <script>
+        let statusData = "http://gsx2json.com/api?id=1qRN1CTiEBqQkxfOUI8_wYfXiWxoVjHKiwruslmfOqSs&sheet=1&columns=0&integers=0";
+        let phaseData = "http://gsx2json.com/api?id=1qRN1CTiEBqQkxfOUI8_wYfXiWxoVjHKiwruslmfOqSs&sheet=2&columns=0&integers=0";
+        let companyData = "http://gsx2json.com/api?id=1qRN1CTiEBqQkxfOUI8_wYfXiWxoVjHKiwruslmfOqSs&sheet=3&columns=0&integers=0";
+        let typeData = "http://gsx2json.com/api?id=1qRN1CTiEBqQkxfOUI8_wYfXiWxoVjHKiwruslmfOqSs&sheet=4&columns=0&integers=0";
+
+        async function getData() {
+            let data = await fetch(statusData);
+            return (await data.json())['rows'];
+        }
+
+        async function getCompanies() {
+            let data = await fetch(companyData);
+            let companies = (await data.json())['rows'];
+            companyDict = {};
+            companies.forEach(company => {
+                companyDict[company.companyname] = company;
+            })
+            return companyDict;
+        }        
+
+        new Vue({
+            el: '#app',
+            data: {
+                companies: {},
+                phases: {
+                    1: "Pre-clinical research",
+                    2: "Pre-clinical trials",
+                    3: "Phase 1 trial",
+                    4: "Phase 2 trial",
+                    5: "Phase 3 trial",
+                    6: "FDA Approved",
+                    7: "Generally Available",
+                },
+                selected: null,
+                statusData: [
+                {
+companyname: "University of Melbourne and Murdoch Children’s Research Institute,Radboud University Medical Center,Faustman Lab at Massachusetts General Hospital",
+vaccinename: "BCG",
+vaccinetype: "Live-attenuated",
+phase: "5",
+details: "The BCG vaccine has been implicated in helping to combat other infections outside TB by boosting the immune system to fight similar infections. In 2017, the World Health Organization (WHO) reported the BCG vaccine may be effective against leprosy and other nontuberculous mycobacteria such as buruli ulcer disease. Other papers have posited the vaccine is effective in preventing acute respiratory tract infections in elderly patients, other respiratory infection and sepsis. A recent non-peer reviewed paper in the preprint server medRxiv has suggested countries with BCG vaccination programs at childhood are faring better in the fight against COVID-19 compared with countries that do not require BCG vaccination.",
+status: "The randomized, controlled, Phase 3 BRACE trial in Australia is currently recruiting and aims to recruit 4,170 healthcare workers in hospitals in Australia. Researchers in The Netherlands launched the randomized, parallel-assignment, phase 3 BCG-CORONA trial on March 31 and plan to enroll 1,500 healthcare workers to receive the BCG vaccine or placebo. The Faustman Lab is currently evaluating the BCG vaccine’s effectiveness in type 1 diabetes and is seeking funding to launch trial to assess whether the vaccine helps prevent COVID-19 in healthcare workers, according to independent reporting from the New York Times.",
+articles: "https://www.mcri.edu.au/BRACE",
+currentlyenrolled: "4170",
+animaltestingstart: "",
+animaltestingend: "",
+p1start: "",
+p1end: "",
+p2start: "",
+p2end: "",
+p3start: "March 30, 2020",
+p3end: "October 30, 2020",
+fdaapproved: "",
+mproduced: "",
+mproduced_2: "",
+mproduced_3: "",
+phase1id: "N/A",
+phase1otherid: "N/A",
+phase1link: "N/A",
+phase2id: "N/A",
+phase2other2: "N/A",
+phase2link: "N/A",
+phase3id: "NCT04327206,NCT04328441",
+phase3otherid: "62586",
+phase3link: "https://clinicaltrials.gov/ct2/show/NCT04327206"
+},
+                ]
+            },
+            async mounted() {
+                this.statusData = await getData();
+                this.companies = await getCompanies();
+                console.log(this.companies);
+            }
+        })
+    </script>
+</body>
+
+</html>

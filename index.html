@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html>
-<!--  -->
+<!-- 
+
+    TODO:
+    * add % of progress
+    
+ -->
 
 
 <head>
@@ -36,40 +41,52 @@
         <div class="columns">
 
         <aside class="column is-2 menu section" style="overflow-y: scroll; height: 95vh">
-            <p class="menu-label">
-                Vaccinations
-            </p>
             <ul class="menu-list">
                 <li><a :class="{'is-active': selected == null}" @click="selected = null">All Vaccinations</a></li>
-                <li v-for="vaccine in statusData"><a :class="{'is-active': selected == vaccine.vaccinename}" @click="selected = vaccine.vaccinename">{{ vaccine.vaccinename }}</a></li>
             </ul>
+            <div v-for="phaseid in phaseOrderSidebar">
+                <p class="menu-label" style="margin-top: 10px">{{ phases[phaseid] }}</p>
+                <ul class="menu-list">
+                    <li v-for="vaccine in vaccinationsByPhase[phaseid]">
+                        <a style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap" :class="{'is-active': selected == vaccine.vaccinename}" @click="selected = vaccine.vaccinename">{{ vaccine.vaccinename }}</a>
+                    </li>
+                </ul>
+            </div>
+            
         </aside>
 
 
-        <div class="column section">
+        <div class="column section" style="overflow-y: scroll; height: 95vh">
             <div v-if="selected == null">
-                <div class="columns is-multiline">
-                    <div class="column" v-for="vaccine in statusData">
-                        <div class="card" style="width: 350px;">
-                            <div class="card-content">
-                                <div v-if="company in companies" class="is-size-6" v-for="company in vaccine.companyname.split(',')" style="float: right">
-                                    <img style="margin-left: 10px" :src="'https://www.countryflags.io/' + companies[company].companycountrycode + '/flat/32.png'" style="vertical-align: middle">                                        
-                                </div>
-            
-                                <h3 class="is-size-4" style="margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ vaccine.vaccinename }}</h3>
-                                <p class="is-size-7" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ vaccine.companyname }}</p>
-                                <div class="menu-label">Progress</div>
-                                <progress class="progress is-success" :value="vaccine.phase" max="7">15%</progress>
-                                <div class="menu-label">Phase</div>
-                                <p class="is-size-5">{{ phases[vaccine.phase] }}</p>
+                <b-tabs>
+                    <b-tab-item v-for="phaseid in phaseOrder" v-if="vaccinationsByPhase[phaseid]" :label="phases[phaseid] + ' (' + vaccinationsByPhase[phaseid].length + ')'">
+                        <h3 class="is-size-3" style="margin-bottom: 20px">Vaccinations in status: {{ phases[phaseid] }}</h3>
+                        <div class="columns is-multiline">
+                            <div class="column" v-for="vaccine in vaccinationsByPhase[phaseid]">
+                                <div class="card" style="width: 350px;">
+                                    <div class="card-content">
+                                        <div v-if="company in companies" class="is-size-6" v-for="company in vaccine.companyname.split(',')" style="float: right">
+                                            <img style="margin-left: 10px" :src="'https://www.countryflags.io/' + companies[company].companycountrycode + '/flat/32.png'" style="vertical-align: middle">                                        
+                                        </div>
+                    
+                                        <h3 class="is-size-4" style="margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ vaccine.vaccinename }}</h3>
+                                        <p class="is-size-7" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ vaccine.companyname }}</p>
+                                        <div class="menu-label">Progress</div>
+                                        <progress class="progress is-success" :value="vaccine.phase" max="7">15%</progress>
+                                        <div class="menu-label">Phase</div>
+                                        <p class="is-size-5">{{ phases[vaccine.phase] }}</p>
 
-                            </div>
-                            <div class="card-footer">
-                                <a class="card-footer-item" @click="selected = vaccine.vaccinename">More Information</a>
+                                    </div>
+                                    <div class="card-footer">
+                                        <a class="card-footer-item" @click="selected = vaccine.vaccinename">More Information</a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+
+                    </b-tab-item>
+                </b-tabs>
+
             </div>
 
             <div v-for="vaccine in statusData" class="card" v-if="selected == vaccine.vaccinename">
@@ -206,23 +223,39 @@
         new Vue({
             el: '#app',
             data: {
+                vaccinationsByPhase: {},
                 companies: {},
+                companiesByPhase: [],
                 phases: {
-                    1: "Pre-clinical research",
-                    2: "Pre-clinical trials",
-                    3: "Phase 1 trial",
-                    4: "Phase 2 trial",
-                    5: "Phase 3 trial",
-                    6: "FDA Approved",
+                    8: "All Vaccines",
                     7: "Generally Available",
+                    6: "FDA Approved",
+                    5: "Phase 3 trial",
+                    4: "Phase 2 trial",
+                    3: "Phase 1 trial",
+                    2: "Pre-clinical trials",
+                    1: "Pre-clinical research",
                 },
+                phaseOrder: [8,7,6,5,4,3,2,1],
+                phaseOrderSidebar: [7,6,5,4,3,2,1],
                 selected: null,
                 statusData: []
             },
             async mounted() {
                 this.statusData = await getData();
                 this.companies = await getCompanies();
-                console.log(this.companies);
+                let phases = Object.keys(this.phases);
+                let vaccinationsByPhase = {}
+
+                phases.forEach(phase => {
+                    if (phase == 8) {
+                        vaccinationsByPhase[phase] = this.statusData;
+                    } else {
+                        vaccinationsByPhase[phase] = this.statusData.filter(x => x.phase == phase);
+
+                    }
+                })
+                this.vaccinationsByPhase = vaccinationsByPhase;
             }
         })
     </script>

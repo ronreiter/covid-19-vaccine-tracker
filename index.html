@@ -43,9 +43,11 @@
                 </b-navbar-item>
             </template>
             <template slot="end">
-                <b-navbar-item href="https://docs.google.com/spreadsheets/d/1qRN1CTiEBqQkxfOUI8_wYfXiWxoVjHKiwruslmfOqSs/edit#gid=0" target="_blank">
-                    
+                <b-navbar-item href="https://docs.google.com/spreadsheets/d/1qRN1CTiEBqQkxfOUI8_wYfXiWxoVjHKiwruslmfOqSs/edit#gid=0" target="_blank">                
                     Spreadsheet
+                </b-navbar-item>
+                <b-navbar-item href="https://github.com/ronreiter/covid-19-vaccine-tracker" target="_blank">                
+                    GitHub
                 </b-navbar-item>
             </template>
         </b-navbar>
@@ -124,17 +126,20 @@
                             <p>Pre-clinical Trials</p>
                         </div>
                         <div class="column">
-                            <p><a :href="vaccine.phase1link" target="_blank">Phase 1 trial</a></p>
+                            <p><a v-if="vaccine.phase1link" :href="vaccine.phase1link" target="_blank">Phase 1 trial</a></p>
+                            <p v-if="!vaccine.phase1link">Phase 1 trial</p>
                             <p>Start: {{ vaccine.p1start }}</p>
                             <p>End: {{ vaccine.p1end }}</p>
                         </div>
                         <div class="column">
-                            <p><a :href="vaccine.phase2link" target="_blank">Phase 2 trial</a></p>
+                            <p><a v-if="vaccine.phase2link" :href="vaccine.phase2link" target="_blank">Phase 2 trial</a></p>
+                            <p v-if="!vaccine.phase2link">Phase 2 trial</p>
                             <p>Start: {{ vaccine.p2start }}</p>
                             <p>End: {{ vaccine.p2end }}</p>
                         </div>
                         <div class="column">
-                            <p><a :href="vaccine.phase3link" target="_blank">Phase 3 trial</a></p>
+                            <p><a v-if="vaccine.phase3link" :href="vaccine.phase3link" target="_blank">Phase 3 trial</a></p>
+                            <p v-if="!vaccine.phase3link">Phase 3 trial</p>
                             <p>Start: {{ vaccine.p2start }}</p>
                             <p>End: {{ vaccine.p2end }}</p>
                         </div>
@@ -165,11 +170,33 @@
                     <p>{{ vaccine.details }}</p>
                     <h3 class="menu-label">Status</h3>
                     <p>{{ vaccine.status }}</p>
-                    <div v-if="vaccine.articles">
-                        <h3 class="menu-label">More Information</h3>
-                        <a v-for="article in vaccine.articles.split('\n')" :href="article">{{ article }}</a>
-    
+
+                    <h3 v-if="vaccine.articles" class="menu-label">More Information</h3>
+                    <a v-if="vaccine.articles" v-for="article in vaccine.articles.split('\n')" :href="article">{{ article }}</a>
+                </div>
+            </div>
+            <h3 v-if="selected" class="title is-size-3" style="margin-top: 30px">Latest News on {{ selected }}</h3>
+            <div v-if="selected" class="card" style="margin: 20px 0" v-for="item in news">
+                <div class="card-content">
+                    <div class="media">
+                        <div class="media-left">
+                          <figure class="image is-64x64">
+                            <img :src="item.urlToImage" :alt="item.title">
+                          </figure>
+                        </div>
+                        <div class="media-content">
+                          <p class="title is-4"><a :href="item.url">{{ item.title }}</a></p>
+                          <p class="subtitle is-6">{{ item.author }}</p>
+                          
+                        </div>
                     </div>
+                    <div class="content">
+                        {{ item.description }}<br/><br/>
+                        <time datetime="{{ item.publishedAt }}">Published on {{ new Date(item.publishedAt).toLocaleString() }}</time>
+                    </div>                    
+
+                    <!-- <p>Source: {{ item.source.name }}</p> -->
+                    
                 </div>
             </div>
         </div>
@@ -239,6 +266,7 @@
                 vaccinationsByPhase: {},
                 companies: {},
                 companiesByPhase: [],
+                news: [],
                 phases: {
                     8: "All Vaccines",
                     7: "Generally Available",
@@ -255,6 +283,7 @@
                 statusData: []
             },
             async mounted() {
+
                 this.statusData = await getData();
                 this.companies = await getCompanies();
                 let phases = Object.keys(this.phases);
@@ -269,6 +298,14 @@
                     }
                 })
                 this.vaccinationsByPhase = vaccinationsByPhase;
+            },
+            watch: {
+                async selected() {
+                    let query = this.selected;
+                    let res = await fetch(`https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&language=en&apiKey=248c68214857474fbb7556c917ad586f`);
+                    this.news = (await res.json())['articles'];
+
+                }
             }
         })
     </script>

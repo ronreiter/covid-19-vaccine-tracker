@@ -157,9 +157,14 @@
                             <p class="is-size-3">{{ phases[vaccine.phase] }}</p>
                         </div>
                         <div class="column">
-                            <h3 class="menu-label">Type</h3>
-                            <p class="is-size-3">{{ vaccine.vaccinetype }}</p>
-                        </div>
+                                <h3 class="menu-label">Type</h3>
+                                <b-tooltip class="column" :label="vaccineTypes[vaccine.vaccinetype].description"
+                                    position="is-bottom" style="padding-top: 0px;padding-bottom: 0px;" size="is-large"
+                                    multilined>
+                                    <p class="is-size-3">
+                                        {{ vaccine.vaccinetype }}</p>
+                                </b-tooltip>
+                            </div>
                         <div class="column">
                             <h3 class="menu-label">Candidates Enrolled</h3>
                             <p class="is-size-3">{{ vaccine.currentlyenrolled }}</p>
@@ -260,11 +265,22 @@
             return companyDict;
         }        
 
+        async function getVaccineTypes() {
+            let vaccineTypes = await gsx(sheetID, 4);
+            vaccineDict = {};
+            vaccineTypes.forEach(vt => {
+                vaccineDict[vt.type] = vt;
+            })
+            console.log(vaccineDict)
+            return vaccineDict;
+        }
+
         new Vue({
             el: '#app',
             data: {
                 vaccinationsByPhase: {},
                 companies: {},
+                vaccineTypes: {},
                 companiesByPhase: [],
                 news: [],
                 phases: {
@@ -286,6 +302,7 @@
 
                 this.statusData = await getData();
                 this.companies = await getCompanies();
+                this.vaccineTypes = await getVaccineTypes();
                 let phases = Object.keys(this.phases);
                 let vaccinationsByPhase = {}
 
